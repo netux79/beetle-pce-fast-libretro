@@ -176,7 +176,7 @@ else ifeq ($(platform), wii)
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES += -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN -fno-strict-overflow -fsigned-char -fomit-frame-pointer
 
    EXTRA_INCLUDES := -I$(DEVKITPRO)/libogc/include
    FLAGS += -DHAVE_MKDIR
@@ -242,7 +242,7 @@ OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 all: $(TARGET)
 
 ifeq ($(DEBUG),0)
-   FLAGS += -O2 $(EXTRA_GCC_FLAGS)
+   FLAGS += -O3 $(EXTRA_GCC_FLAGS)
 else
    FLAGS += -O0
 endif

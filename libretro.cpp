@@ -511,8 +511,8 @@ static void DoSimpleCommand(int cmd)
 static MDFNSetting PCESettings[] = 
 {
   { "pce_fast.correct_aspect", MDFNSF_CAT_VIDEO, gettext_noop("Correct the aspect ratio."), NULL, MDFNST_BOOL, "1" },
-  { "pce_fast.slstart", MDFNSF_NOFLAGS, gettext_noop("First rendered scanline."), NULL, MDFNST_UINT, "4", "0", "239" },
-  { "pce_fast.slend", MDFNSF_NOFLAGS, gettext_noop("Last rendered scanline."), NULL, MDFNST_UINT, "235", "0", "239" },
+  { "pce_fast.slstart", MDFNSF_NOFLAGS, gettext_noop("First rendered scanline."), NULL, MDFNST_UINT, "11", "0", "239" },
+  { "pce_fast.slend", MDFNSF_NOFLAGS, gettext_noop("Last rendered scanline."), NULL, MDFNST_UINT, "234", "0", "239" },
   { "pce_fast.mouse_sensitivity", MDFNSF_NOFLAGS, gettext_noop("Mouse sensitivity."), NULL, MDFNST_FLOAT, "0.50", NULL, NULL, NULL, PCEINPUT_SettingChanged },
   { "pce_fast.disable_softreset", MDFNSF_NOFLAGS, gettext_noop("If set, when RUN+SEL are pressed simultaneously, disable both buttons temporarily."), NULL, MDFNST_BOOL, "0", NULL, NULL, NULL, PCEINPUT_SettingChanged },
   { "pce_fast.arcadecard", MDFNSF_EMU_STATE | MDFNSF_UNTRUSTED_SAFE, gettext_noop("Enable Arcade Card emulation."), NULL, MDFNST_BOOL, "1" },
@@ -1216,8 +1216,8 @@ static void set_basename(const char *path)
 #define MEDNAFEN_CORE_VERSION "v0.9.36.1"
 #define MEDNAFEN_CORE_EXTENSIONS "pce|cue|ccd"
 #define MEDNAFEN_CORE_TIMING_FPS 59.82
-#define MEDNAFEN_CORE_GEOMETRY_BASE_W 288
-#define MEDNAFEN_CORE_GEOMETRY_BASE_H 232
+#define MEDNAFEN_CORE_GEOMETRY_BASE_W 256
+#define MEDNAFEN_CORE_GEOMETRY_BASE_H 224
 #define MEDNAFEN_CORE_GEOMETRY_MAX_W 512
 #define MEDNAFEN_CORE_GEOMETRY_MAX_H 242
 #define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (4.0 / 3.0)
@@ -1731,8 +1731,8 @@ void retro_set_environment(retro_environment_t cb)
       { "pce_fast_cdimagecache", "CD Image Cache (Restart); disabled|enabled" },
       { "pce_nospritelimit", "No Sprite Limit; disabled|enabled" },
       { "pce_keepaspect", "Keep Aspect; enabled|disabled" },
-      { "pce_initial_scanline", "Initial scanline; 3|4|5|6|7|8|9|10|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|0|1|2" },
-      { "pce_last_scanline", "Last scanline; 241|242|208|209|210|211|212|213|214|215|216|217|218|219|220|221|222|223|224|225|226|227|228|229|230|231|232|233|234|235|236|237|238|239|240" },
+      { "pce_initial_scanline", "Initial scanline; 11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|0|1|2|3|4|5|6|7|8|9|10" },
+      { "pce_last_scanline", "Last scanline; 234|235|236|237|238|239|240|241|242|208|209|210|211|212|213|214|215|216|217|218|219|220|221|222|223|224|225|226|227|228|229|230|231|232|233" },
       { "pce_cddavolume", "(CD) CDDA Volume; 100|0|10|20|30|40|50|60|70|80|90" },
       { "pce_adpcmvolume", "(CD) ADPCM Volume; 100|0|10|20|30|40|50|60|70|80|90" },
       { "pce_cdpsgvolume", "(CD) CD PSG Volume; 100|0|10|20|30|40|50|60|70|80|90" },
