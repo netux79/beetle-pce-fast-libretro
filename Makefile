@@ -162,6 +162,8 @@ else ifeq ($(platform), xenon)
    FLAGS += -DHAVE_MKDIR
    STATIC_LINKING = 1
 else ifeq ($(platform), ngc)
+   # Force disabling threads
+   NEED_THREADING = 0
    TARGET := $(TARGET_NAME)_ngc.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
@@ -172,6 +174,8 @@ else ifeq ($(platform), ngc)
    FLAGS += -DHAVE_MKDIR
    STATIC_LINKING = 1
 else ifeq ($(platform), wii)
+   # Force disabling threads
+   NEED_THREADING = 0
    TARGET := $(TARGET_NAME)_wii.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)

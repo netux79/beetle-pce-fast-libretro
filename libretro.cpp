@@ -4,7 +4,9 @@
 #include "mednafen/git.h"
 #include "mednafen/general.h"
 #include "libretro.h"
+#ifdef WANT_THREADING
 #include "thread.h"
+#endif
 
 #include	"mednafen/FileWrapper.h"
 
@@ -23,8 +25,6 @@
 #ifdef _MSC_VER
 #include "mednafen/msvc_compat.h"
 #endif
-
-static bool old_cdimagecache = false;
 
 extern MDFNGI EmulatedPCE_Fast;
 MDFNGI *MDFNGameInfo = &EmulatedPCE_Fast;
@@ -942,12 +942,12 @@ MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
 
    for(unsigned i = 0; i < file_list.size(); i++)
    {
-    CDInterfaces.push_back(CDIF_Open(file_list[i].c_str(), false, old_cdimagecache));
+    CDInterfaces.push_back(CDIF_Open(file_list[i].c_str(), false));
    }
   }
   else
   {
-   CDInterfaces.push_back(CDIF_Open(devicename, false, old_cdimagecache));
+   CDInterfaces.push_back(CDIF_Open(devicename, false));
   }
  }
  catch(std::exception &e)
@@ -1322,21 +1322,6 @@ static void set_volume (uint32_t *ptr, unsigned number)
 static void check_variables(void)
 {
    struct retro_variable var = {0};
-
-   var.key = "pce_fast_cdimagecache";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      bool cdimage_cache = true;
-
-      if (strcmp(var.value, "enabled") == 0)
-         cdimage_cache = true;
-      else if (strcmp(var.value, "disabled") == 0)
-         cdimage_cache = false;
-
-      if (cdimage_cache != old_cdimagecache)
-         old_cdimagecache = cdimage_cache;
-   }
 
    var.key = "pce_nospritelimit";
 
@@ -1728,7 +1713,6 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
-      { "pce_fast_cdimagecache", "CD Image Cache (Restart); disabled|enabled" },
       { "pce_nospritelimit", "No Sprite Limit; disabled|enabled" },
       { "pce_keepaspect", "Keep Aspect; enabled|disabled" },
       { "pce_initial_scanline", "Initial scanline; 11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|0|1|2|3|4|5|6|7|8|9|10" },
@@ -1850,6 +1834,7 @@ void retro_cheat_reset(void)
 void retro_cheat_set(unsigned, bool, const char *)
 {}
 
+#ifdef WANT_THREADING
 MDFN_Thread *MDFND_CreateThread(int (*fn)(void *), void *data)
 {
    return (MDFN_Thread*)sthread_create((void (*)(void*))fn, data);
@@ -1915,6 +1900,12 @@ int MDFND_SignalCond(MDFN_Cond *cond)
    return 0; // not sure about this return
 }
 
+void MDFND_Sleep(unsigned int time)
+{
+   retro_sleep(time);
+}
+#endif
+
 #ifdef _WIN32
 static void sanitize_path(std::string &path)
 {
@@ -1974,11 +1965,6 @@ void MDFND_PrintError(const char* err)
 {
    if (log_cb)
       log_cb(RETRO_LOG_ERROR, "%s\n", err);
-}
-
-void MDFND_Sleep(unsigned int time)
-{
-   retro_sleep(time);
 }
 
 /* forward declarations */

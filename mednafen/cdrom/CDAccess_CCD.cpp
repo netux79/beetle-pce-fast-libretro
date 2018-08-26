@@ -87,11 +87,11 @@ static T CCD_ReadInt(CCD_Section &s, const std::string &propname, const bool hav
 }
 
 
-CDAccess_CCD::CDAccess_CCD(const char *path, bool image_memcache) : img_stream(NULL), sub_stream(NULL), img_numsectors(0)
+CDAccess_CCD::CDAccess_CCD(const char *path) : img_stream(NULL), sub_stream(NULL), img_numsectors(0)
 {
  try
  {
-  Load(path, image_memcache);
+  Load(path);
  }
  catch(...)
  {
@@ -100,7 +100,7 @@ CDAccess_CCD::CDAccess_CCD(const char *path, bool image_memcache) : img_stream(N
  }
 }
 
-void CDAccess_CCD::Load(const char *path, bool image_memcache)
+void CDAccess_CCD::Load(const char *path)
 {
  FileStream cf(path, FileStream::MODE_READ);
  std::map<std::string, CCD_Section> Sections;
@@ -358,14 +358,7 @@ case 1:
  {
   std::string image_path = MDFN_EvalFIP(dir_path, file_base + std::string(".") + std::string(img_extsd), true);
 
-  if(image_memcache)
-  {
-   img_stream = new MemoryStream(new FileStream(image_path.c_str(), FileStream::MODE_READ));
-  }
-  else
-  {
-   img_stream = new FileStream(image_path.c_str(), FileStream::MODE_READ);
-  }
+  img_stream = new FileStream(image_path.c_str(), FileStream::MODE_READ);
 
   int64 ss = img_stream->size();
 
@@ -380,10 +373,7 @@ case 1:
  {
   std::string sub_path = MDFN_EvalFIP(dir_path, file_base + std::string(".") + std::string(sub_extsd), true);
 
-  if(image_memcache)
-   sub_stream = new MemoryStream(new FileStream(sub_path.c_str(), FileStream::MODE_READ));
-  else
-   sub_stream = new FileStream(sub_path.c_str(), FileStream::MODE_READ);
+  sub_stream = new FileStream(sub_path.c_str(), FileStream::MODE_READ);
 
   if(sub_stream->size() != (int64)img_numsectors * 96)
    throw MDFN_Error(0, _("CCD SUB file size mismatch."));
@@ -403,7 +393,6 @@ case 1:
 void CDAccess_CCD::CheckSubQSanity(void)
 {
  size_t checksum_pass_counter = 0;
- int prev_lba = INT_MAX;
  uint8 prev_track = 0;
 
  for(size_t s = 0; s < img_numsectors; s++)
@@ -448,8 +437,6 @@ void CDAccess_CCD::CheckSubQSanity(void)
     {
      int lba = ((BCD_to_U8(am_bcd) * 60 + BCD_to_U8(as_bcd)) * 75 + BCD_to_U8(af_bcd)) - 150;
      uint8 track = BCD_to_U8(track_bcd);
-
-     prev_lba = lba;
 
      if(track < prev_track)
       throw MDFN_Error(0, _("Garbage subchannel Q data detected(bad track number)"));

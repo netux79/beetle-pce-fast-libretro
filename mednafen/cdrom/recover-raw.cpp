@@ -178,8 +178,6 @@ static int simple_lec(unsigned char *frame)
 
 int ValidateRawSector(unsigned char *frame, bool xaMode)
 {  
- int lec_did_sth = FALSE;
-
   /* Do simple L-EC.
      It seems that drives stop their internal L-EC as soon as the
      EDC is okay, so we may see uncorrected errors in the parity bytes.
@@ -187,11 +185,9 @@ int ValidateRawSector(unsigned char *frame, bool xaMode)
      L-EC is expensive, we skip our L-EC as well when the EDC is fine. */
 
   if(!CheckEDC(frame, xaMode))
-  {
-   lec_did_sth = simple_lec(frame);
-  }
+      simple_lec(frame);
+  
   /* Test internal sector checksum again */
-
   if(!CheckEDC(frame, xaMode))
   {  
    /* EDC failure in RAW sector */

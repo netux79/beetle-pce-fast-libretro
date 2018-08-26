@@ -20,7 +20,6 @@ void MDFND_PrintError(const char *s);
 void MDFND_Message(const char *s);
 
 uint32 MDFND_GetTime(void);
-void MDFND_Sleep(uint32 ms);
 
 #ifdef WANT_THREADING
 /* Being threading support. */
@@ -30,6 +29,8 @@ void MDFND_Sleep(uint32 ms);
 struct MDFN_Thread;
 struct MDFN_Mutex;
 struct MDFN_Cond;
+
+void MDFND_Sleep(uint32 ms);
 
 MDFN_Thread *MDFND_CreateThread(int (*fn)(void *), void *data);
 void MDFND_WaitThread(MDFN_Thread *thread, int *status);

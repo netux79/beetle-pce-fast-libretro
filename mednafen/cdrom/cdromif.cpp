@@ -48,6 +48,107 @@ enum
  CDIF_MSG_EJECT,		// Emu -> read, args[0]; 0=insert, 1=eject
 };
 
+typedef struct
+{
+ bool valid;
+ bool error;
+ uint32 lba;
+ uint8 data[2352 + 96];
+} CDIF_Sector_Buffer;
+
+// TODO: prohibit copy constructor
+class CDIF_ST : public CDIF
+{
+ public:
+
+ CDIF_ST(CDAccess *cda);
+ virtual ~CDIF_ST();
+
+ virtual void HintReadSector(uint32 lba);
+ virtual bool ReadRawSector(uint8 *buf, uint32 lba);
+ virtual bool Eject(bool eject_status);
+
+ private:
+ CDAccess *disc_cdaccess;
+};
+
+CDIF::CDIF() : UnrecoverableError(false), is_phys_cache(false), DiscEjected(false)
+{
+
+}
+
+CDIF::~CDIF()
+{
+
+}
+
+bool CDIF::ValidateRawSector(uint8 *buf)
+{
+ int mode = buf[12 + 3];
+
+ if(mode != 0x1 && mode != 0x2)
+  return(false);
+
+ if(!edc_lec_check_and_correct(buf, mode == 2))
+  return(false);
+
+ return(true);
+}
+
+int CDIF::ReadSector(uint8* pBuf, uint32 lba, uint32 nSectors)
+{
+ int ret = 0;
+
+ if(UnrecoverableError)
+  return(false);
+
+ while(nSectors--)
+ {
+  uint8 tmpbuf[2352 + 96];
+
+  if(!ReadRawSector(tmpbuf, lba))
+  {
+   puts("CDIF Raw Read error");
+   return(FALSE);
+  }
+
+  if(!ValidateRawSector(tmpbuf))
+  {
+     if (log_cb)
+     {
+        log_cb(RETRO_LOG_ERROR, "Uncorrectable data at sector %d\n", lba);
+        log_cb(RETRO_LOG_ERROR, "Uncorrectable data at sector %d\n", lba);
+     }
+     return(false);
+  }
+
+  const int mode = tmpbuf[12 + 3];
+
+  if(!ret)
+   ret = mode;
+
+  if(mode == 1)
+  {
+   memcpy(pBuf, &tmpbuf[12 + 4], 2048);
+  }
+  else if(mode == 2)
+  {
+   memcpy(pBuf, &tmpbuf[12 + 4 + 8], 2048);
+  }
+  else
+  {
+   printf("CDIF_ReadSector() invalid sector type at LBA=%u\n", (unsigned int)lba);
+   return(false);
+  }
+
+  pBuf += 2048;
+  lba++;
+ }
+
+ return(ret);
+}
+
+#ifdef WANT_THREADING
 class CDIF_Message
 {
  public:
@@ -79,15 +180,6 @@ class CDIF_Queue
  MDFN_Mutex *ze_mutex;
  MDFN_Cond *ze_cond;
 };
-
-
-typedef struct
-{
- bool valid;
- bool error;
- uint32 lba;
- uint8 data[2352 + 96];
-} CDIF_Sector_Buffer;
 
 // TODO: prohibit copy constructor
 class CDIF_MT : public CDIF
@@ -128,7 +220,6 @@ class CDIF_MT : public CDIF
  MDFN_Mutex *SBMutex;
  MDFN_Cond *SBCond;
 
-
  //
  // Read-thread-only:
  //
@@ -138,34 +229,6 @@ class CDIF_MT : public CDIF
  int ra_count;
  uint32 last_read_lba;
 };
-
-
-// TODO: prohibit copy constructor
-class CDIF_ST : public CDIF
-{
- public:
-
- CDIF_ST(CDAccess *cda);
- virtual ~CDIF_ST();
-
- virtual void HintReadSector(uint32 lba);
- virtual bool ReadRawSector(uint8 *buf, uint32 lba);
- virtual bool Eject(bool eject_status);
-
- private:
- CDAccess *disc_cdaccess;
-};
-
-CDIF::CDIF() : UnrecoverableError(false), is_phys_cache(false), DiscEjected(false)
-{
-
-}
-
-CDIF::~CDIF()
-{
-
-}
-
 
 CDIF_Message::CDIF_Message()
 {
@@ -465,7 +528,6 @@ CDIF_MT::CDIF_MT(CDAccess *cda) : disc_cdaccess(cda), CDReadThread(NULL), SBMute
  }
 }
 
-
 CDIF_MT::~CDIF_MT()
 {
  bool thread_deaded_failed = false;
@@ -495,19 +557,6 @@ CDIF_MT::~CDIF_MT()
   delete disc_cdaccess;
   disc_cdaccess = NULL;
  }
-}
-
-bool CDIF::ValidateRawSector(uint8 *buf)
-{
- int mode = buf[12 + 3];
-
- if(mode != 0x1 && mode != 0x2)
-  return(false);
-
- if(!edc_lec_check_and_correct(buf, mode == 2))
-  return(false);
-
- return(true);
 }
 
 bool CDIF_MT::ReadRawSector(uint8 *buf, uint32 lba)
@@ -567,59 +616,6 @@ void CDIF_MT::HintReadSector(uint32 lba)
  ReadThreadQueue.Write(CDIF_Message(CDIF_MSG_READ_SECTOR, lba));
 }
 
-int CDIF::ReadSector(uint8* pBuf, uint32 lba, uint32 nSectors)
-{
- int ret = 0;
-
- if(UnrecoverableError)
-  return(false);
-
- while(nSectors--)
- {
-  uint8 tmpbuf[2352 + 96];
-
-  if(!ReadRawSector(tmpbuf, lba))
-  {
-   puts("CDIF Raw Read error");
-   return(FALSE);
-  }
-
-  if(!ValidateRawSector(tmpbuf))
-  {
-     if (log_cb)
-     {
-        log_cb(RETRO_LOG_ERROR, "Uncorrectable data at sector %d\n", lba);
-        log_cb(RETRO_LOG_ERROR, "Uncorrectable data at sector %d\n", lba);
-     }
-     return(false);
-  }
-
-  const int mode = tmpbuf[12 + 3];
-
-  if(!ret)
-   ret = mode;
-
-  if(mode == 1)
-  {
-   memcpy(pBuf, &tmpbuf[12 + 4], 2048);
-  }
-  else if(mode == 2)
-  {
-   memcpy(pBuf, &tmpbuf[12 + 4 + 8], 2048);
-  }
-  else
-  {
-   printf("CDIF_ReadSector() invalid sector type at LBA=%u\n", (unsigned int)lba);
-   return(false);
-  }
-
-  pBuf += 2048;
-  lba++;
- }
-
- return(ret);
-}
-
 bool CDIF_MT::Eject(bool eject_status)
 {
  if(UnrecoverableError)
@@ -640,6 +636,7 @@ bool CDIF_MT::Eject(bool eject_status)
 
  return(true);
 }
+#endif
 
 //
 //
@@ -877,12 +874,13 @@ Stream *CDIF::MakeStream(uint32 lba, uint32 sector_count)
 }
 
 
-CDIF *CDIF_Open(const char *path, const bool is_device, bool image_memcache)
+CDIF *CDIF_Open(const char *path, const bool is_device)
 {
-   CDAccess *cda = cdaccess_open_image(path, image_memcache);
+   CDAccess *cda = cdaccess_open_image(path);
 
-   if(!image_memcache)
-      return new CDIF_MT(cda);
-   else
-      return new CDIF_ST(cda); 
+#ifdef WANT_THREADING
+   return new CDIF_MT(cda);
+#else
+   return new CDIF_ST(cda);
+#endif
 }

@@ -46,7 +46,7 @@ void vorbis_comment_init(vorbis_comment *vc){
 static int tagcompare(const char *s1, const char *s2, int n){
   int c=0;
   while(c < n){
-    if(toupper(s1[c]) != toupper(s2[c]))
+    if(toupper((unsigned char)s1[c]) != toupper((unsigned char)s2[c]))
       return !0;
     c++;
   }
